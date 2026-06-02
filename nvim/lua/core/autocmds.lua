@@ -1,0 +1,38 @@
+-- -- Restore folds when entering a window
+-- vim.api.nvim_create_autocmd("BufWinEnter", {
+--   pattern = { "*.html", "*.js", "*.ts", "*.css", "*.lua", "*.py", "*.java" },
+--   callback = function()
+--     vim.cmd("silent! loadview")
+--   end,
+-- })
+
+-- vim.api.nvim_create_autocmd('BufWritePre', {
+--   group = augroup,
+--   buffer = bufnr,
+--   callback = function()
+--     vim.cmd("normal! zx")
+--     vim.cmd("mkview")
+--     vim.lsp.buf.format { async = false }
+--     vim.cmd("silent! loadview")
+--     -- Do NOT run 'zx' here!
+--   end,
+-- })
+-- vim.api.nvim_create_user_command("BiomeFormatWithFolds", function()
+--   -- Save current fold state and view
+--   vim.cmd("mkview")
+--
+--   -- Format with biome
+--   vim.cmd([[%!npx biome format --stdin-file-path %]])
+--
+--   -- Re-establish folding after formatting
+--   vim.opt_local.foldmethod = "expr"
+--   vim.opt_local.foldexpr = "nvim_treesitter#foldexpr()"
+--
+--   -- Restore view (includes folds)
+--   vim.cmd("silent! loadview")
+--
+--   -- Only recalculate folds if needed (don't run zx here as it resets folds)
+--   if vim.fn.foldlevel(1) == 0 then
+--     vim.cmd("normal! zx")
+--   end
+-- end, {})
