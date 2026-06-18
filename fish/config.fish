@@ -2,19 +2,39 @@ set fish_greeting ""
 
 set -gx TERM xterm-256color
 
-# theme
-set -g theme_color_scheme terminal-dark
-set -g fish_prompt_pwd_dir_length 1
-set -g theme_display_user yes
-set -g theme_hide_hostname no
-set -g theme_hostname always
+if command -q dircolors
+    eval (dircolors -c | string replace -r '^setenv (\S+) (.*)$' 'set -gx $1 $2;')
+end
 
 # aliases
-alias ls "ls -p -G"
-alias la "ls -A"
-alias ll "ls -l"
-alias lla "ll -A"
-alias g git
+alias ls "eza -lh --git --icons --group-directories-first"
+alias la "eza -lha --git --icons --group-directories-first"
+alias ll "eza -l --git --icons --group-directories-first"
+alias lla "eza -la --git --icons --group-directories-first"
+alias tree "eza --tree --icons"
+alias cat "bat --paging=never"
+alias find fd
+abbr -a g git
+abbr -a gs 'git status'
+abbr -a gss 'git status -s'
+abbr -a gd 'git diff'
+abbr -a gds 'git diff --staged'
+abbr -a gp 'git push'
+abbr -a gl 'git pull'
+abbr -a glog 'git log --oneline --graph --decorate'
+abbr -a gc 'git commit'
+abbr -a gcm 'git commit -m'
+abbr -a gca 'git commit --amend'
+abbr -a gco 'git checkout'
+abbr -a gcb 'git checkout -b'
+abbr -a gb 'git branch'
+abbr -a gr 'git restore'
+abbr -a grs 'git restore --staged'
+abbr -a lg lazygit
+abbr -a v nvim
+abbr -a t tmux
+abbr -a ta 'tmux attach'
+abbr -a tls 'tmux ls'
 
 set -gx PATH bin $PATH
 set -gx PATH ~/bin $PATH
@@ -24,7 +44,7 @@ set -gx PATH ~/.local/bin $PATH
 set -gx PATH node_modules/.bin $PATH
 
 # Go
-set -g GOPATH $HOME/go
+set -gx GOPATH $HOME/go
 set -gx PATH $GOPATH/bin $PATH
 
 source (dirname (status --current-filename))/config-linux.fish
@@ -47,8 +67,6 @@ if test -d /home/linuxbrew/.linuxbrew
     set -q INFOPATH; or set INFOPATH ''
     set -gx INFOPATH "/home/linuxbrew/.linuxbrew/share/info" $INFOPATH
 
-    # Homebrew asked for this in order to `brew upgrade`
-    set -gx HOMEBREW_GITHUB_API_TOKEN {api token goes here, don't remember where that's created}
 else if test -d /opt/homebrew
     # Homebrew is installed on MacOS
 
@@ -56,6 +74,13 @@ else if test -d /opt/homebrew
 end
 
 if status is-interactive
-    and not set -q TMUX
-    exec tmux
+    starship init fish | source
+    zoxide init fish | source
+    direnv hook fish | source
+    fzf --fish | source
+    atuin init fish | source
+
+    if not set -q TMUX
+        exec tmux
+    end
 end
