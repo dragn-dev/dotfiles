@@ -35,6 +35,10 @@ abbr -a v nvim
 abbr -a t tmux
 abbr -a ta 'tmux attach'
 abbr -a tls 'tmux ls'
+abbr -a tm 'tmux new-session -A -s main'   # attach-or-create main
+abbr -a tn 'tmux new-session -A -s'        # named: tn <name>
+abbr -a tk 'tmux kill-session -t'          # kill: tk <name>
+abbr -a tks 'tmux kill-server'             # nuke all sessions
 
 set -gx PATH bin $PATH
 set -gx PATH ~/bin $PATH
@@ -47,40 +51,41 @@ set -gx PATH node_modules/.bin $PATH
 set -gx GOPATH $HOME/go
 set -gx PATH $GOPATH/bin $PATH
 
-source (dirname (status --current-filename))/config-linux.fish
+set CONFIG_DIR (dirname (status --current-filename))
 
-set LOCAL_CONFIG (dirname (status --current-filename))/config-local.fish
-
-if test -f $LOCAL_CONFIG
-    source $LOCAL_CONFIG
+# OS-specific config (Homebrew, clipboard, PATH, etc.)
+switch (uname)
+    case Linux
+        source $CONFIG_DIR/config-linux.fish
+    case Darwin
+        source $CONFIG_DIR/config-macos.fish
 end
 
-if test -d /home/linuxbrew/.linuxbrew
-    # Homebrew is installed on Linux
-
-    set -gx HOMEBREW_PREFIX "/home/linuxbrew/.linuxbrew"
-    set -gx HOMEBREW_CELLAR "/home/linuxbrew/.linuxbrew/Cellar"
-    set -gx HOMEBREW_REPOSITORY "/home/linuxbrew/.linuxbrew/Homebrew"
-    set -gx PATH "/home/linuxbrew/.linuxbrew/bin" "/home/linuxbrew/.linuxbrew/sbin" $PATH
-    set -q MANPATH; or set MANPATH ''
-    set -gx MANPATH "/home/linuxbrew/.linuxbrew/share/man" $MANPATH
-    set -q INFOPATH; or set INFOPATH ''
-    set -gx INFOPATH "/home/linuxbrew/.linuxbrew/share/info" $INFOPATH
-
-else if test -d /opt/homebrew
-    # Homebrew is installed on MacOS
-
-    /opt/homebrew/bin/brew shellenv | source
+# Per-machine config (gitignored): secrets, host-only overrides.
+if test -f $CONFIG_DIR/config-local.fish
+    source $CONFIG_DIR/config-local.fish
 end
 
 if status is-interactive
+    # Thin bar cursor instead of the fat block.
+    # (variables cover vi-mode; the escape covers default emacs bindings)
+    set -g fish_cursor_default line
+    set -g fish_cursor_insert line
+    printf '\e[6 q'
+
     starship init fish | source
     zoxide init fish | source
     direnv hook fish | source
     fzf --fish | source
     atuin init fish | source
 
+    # Fresh shells (and the tmux session they spawn) start in ~/projects.
+    # Guarded to $HOME so it never overrides panes opened in a project dir.
+    if test "$PWD" = "$HOME"
+        cd ~/projects
+    end
+
     if not set -q TMUX
-        exec tmux
+        exec tmux new-session -A -s main
     end
 end
